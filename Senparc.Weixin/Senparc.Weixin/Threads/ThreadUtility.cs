@@ -1,4 +1,16 @@
-﻿using System;
+﻿/*----------------------------------------------------------------
+    Copyright (C) 2016 Senparc
+
+    文件名：ThreadUtility.cs
+    文件功能描述：线程工具类
+
+
+    创建标识：Senparc - 20151226
+
+----------------------------------------------------------------*/
+
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,11 +28,6 @@ namespace Senparc.Weixin.Threads
         /// 异步线程容器
         /// </summary>
         public static Dictionary<string, Thread> AsynThreadCollection = new Dictionary<string, Thread>();//后台运行线程
-
-        //static ThreadUtility()
-        //{
-           
-        //}
 
         /// <summary>
         /// 注册线程

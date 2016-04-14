@@ -17,6 +17,7 @@ using Senparc.Weixin.Context;
 using Senparc.Weixin.MP.Entities;
 using Senparc.Weixin.MP.Helpers;
 using Senparc.Weixin.MP.MessageHandlers;
+using Senparc.Weixin.MP.Sample.CommonService.Download;
 using Senparc.Weixin.MP.Sample.CommonService.Utilities;
 
 namespace Senparc.Weixin.MP.Sample.CommonService.CustomMessageHandler
@@ -46,6 +47,18 @@ Nuget地址：https://www.nuget.org/packages/Senparc.Weixin.MP
 更多有关第三方开放平台（Senparc.Weixin.Open）的内容，请回复文字：open
 ",
                 version);
+        }
+
+        public string GetDownloadInfo(CodeRecord codeRecord)
+        {
+            return string.Format(@"您已通过二维码验证，浏览器即将开始下载 Senparc.Weixin SDK 帮助文档。
+当前选择的版本：v{0}
+
+我们期待您的意见和建议，客服热线：400-031-8816。
+
+感谢您对盛派网络的支持！
+
+© 2016 Senparc", codeRecord.Version);
         }
 
         public override IResponseMessageBase OnTextOrEventRequest(RequestMessageText requestMessage)
@@ -230,7 +243,28 @@ Nuget地址：https://www.nuget.org/packages/Senparc.Weixin.MP
         {
             //通过扫描关注
             var responseMessage = CreateResponseMessage<ResponseMessageText>();
-            responseMessage.Content = "通过扫描关注。";
+
+            //下载文档
+            if (!string.IsNullOrEmpty(requestMessage.EventKey))
+            {
+                var sceneId = long.Parse(requestMessage.EventKey.Replace("qrscene_", ""));
+                //var configHelper = new ConfigHelper(new HttpContextWrapper(HttpContext.Current));
+                var codeRecord =
+                    ConfigHelper.CodeCollection.Values.FirstOrDefault(z => z.QrCodeTicket != null && z.QrCodeId == sceneId);
+
+
+                if (codeRecord != null)
+                {
+                    //确认可以下载
+                    codeRecord.AllowDownload = true;
+                    responseMessage.Content = GetDownloadInfo(codeRecord);
+                }
+            }
+
+            responseMessage.Content = responseMessage.Content ?? string.Format("通过扫描二维码进入，场景值：{0}",requestMessage.EventKey);
+
+
+
             return responseMessage;
         }
 
@@ -261,6 +295,25 @@ Nuget地址：https://www.nuget.org/packages/Senparc.Weixin.MP
             {
                 responseMessage.Content += "\r\n============\r\n场景值：" + requestMessage.EventKey;
             }
+
+            //推送消息
+            //下载文档
+            if (requestMessage.EventKey.StartsWith("qrscene_"))
+            {
+                var sceneId = long.Parse(requestMessage.EventKey.Replace("qrscene_", ""));
+                //var configHelper = new ConfigHelper(new HttpContextWrapper(HttpContext.Current));
+                var codeRecord =
+                    ConfigHelper.CodeCollection.Values.FirstOrDefault(z => z.QrCodeTicket != null && z.QrCodeId == sceneId);
+
+                if (codeRecord != null)
+                {
+                    //确认可以下载
+                    codeRecord.AllowDownload = true;
+                    AdvancedAPIs.CustomApi.SendText(null, WeixinOpenId, GetDownloadInfo(codeRecord));
+                }
+            }
+
+
             return responseMessage;
         }
 

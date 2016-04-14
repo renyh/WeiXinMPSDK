@@ -6,12 +6,53 @@
     <members>
         <member name="T:Senparc.Weixin.Cache.IContainerItemCollection">
             <summary>
-            IContainerItemCollection
+            IContainerItemCollection，对某个Container下的缓存值ContainerBag进行封装
             </summary>
+        </member>
+        <member name="P:Senparc.Weixin.Cache.IContainerItemCollection.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="P:Senparc.Weixin.Cache.IContainerItemCollection.Item(System.String)">
+            <summary>
+            索引器
+            </summary>
+            <param name="key">缓存键（通常为AppId，值和IBaseContainerBag.Key相等）</param>
+            <returns></returns>
         </member>
         <member name="T:Senparc.Weixin.Cache.ContainerItemCollection">
             <summary>
             储存某个Container下所有ContainerBag的字典集合
+            </summary>
+        </member>
+        <member name="P:Senparc.Weixin.Cache.ContainerItemCollection.Item(System.String)">
+            <summary>
+            索引器
+            </summary>
+            <param name="key">缓存键（通常为AppId，值和IBaseContainerBag.Key相等）</param>
+            <returns></returns>
+        </member>
+        <member name="P:Senparc.Weixin.Cache.ContainerItemCollection.CreateTime">
+            <summary>
+            创建时间
+            </summary>
+        </member>
+        <member name="T:Senparc.Weixin.Cache.IContainerCacheStragegy">
+            <summary>
+            容器缓存策略接口
+            </summary>
+        </member>
+        <member name="M:Senparc.Weixin.Cache.IContainerCacheStragegy.UpdateContainerBag(System.String,Senparc.Weixin.Containers.IBaseContainerBag)">
+            <summary>
+            更新ContainerBag
+            </summary>
+            <param name="key"></param>
+            <param name="containerBag"></param>
+        </member>
+        <member name="T:Senparc.Weixin.Cache.LocalCacheHelper">
+            <summary>
+            全局静态数据源帮助类
             </summary>
         </member>
         <member name="P:Senparc.Weixin.Cache.LocalCacheHelper.LocalCache">
@@ -23,7 +64,6 @@
             <summary>
             本地容器缓存策略
             </summary>
-            <typeparam name="TContainerBag">容器内</typeparam>
         </member>
         <member name="M:Senparc.Weixin.Cache.LocalContainerCacheStrategy.#ctor">
             <summary>
@@ -62,7 +102,7 @@
         </member>
         <member name="M:Senparc.Weixin.Cache.IBaseCacheStrategy`2.GetAll">
             <summary>
-            获取所有细信息
+            获取所有缓存信息集合
             </summary>
             <returns></returns>
         </member>
@@ -70,7 +110,7 @@
             <summary>
             检查是否存在Key及对象
             </summary>
-            <param name="key"></param>
+            <param name="key">缓存键</param>
             <returns></returns>
         </member>
         <member name="M:Senparc.Weixin.Cache.IBaseCacheStrategy`2.GetCount">
@@ -83,10 +123,8 @@
             <summary>
             更新缓存
             </summary>
-            <typeparam name="TKey"></typeparam>
-            <typeparam name="TValue"></typeparam>
-            <param name="key"></param>
-            <param name="value"></param>
+            <param name="key">缓存键</param>
+            <param name="value">缓存值</param>
         </member>
         <member name="T:Senparc.Weixin.Config">
             <summary>
@@ -126,11 +164,6 @@
             获取符合当前缓存策略配置的缓存的操作对象实例
             </summary>
         </member>
-        <member name="P:Senparc.Weixin.Containers.BaseContainer`1.CollectionList">
-            <summary>
-            所有数据集合的列表   TODO：改为单个Container输出
-            </summary>
-        </member>
         <member name="P:Senparc.Weixin.Containers.BaseContainer`1.ItemCollection">
             <summary>
             获取当前容器的数据项集合
@@ -140,12 +173,6 @@
         <member name="M:Senparc.Weixin.Containers.BaseContainer`1.GetCacheKey">
             <summary>
             获取缓存Key
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:Senparc.Weixin.Containers.BaseContainer`1.GetCollectionList">
-            <summary>
-            获取完整的数据集合的列表，包括所有的Container数据在内（建议不要进行任何修改操作）
             </summary>
             <returns></returns>
         </member>
@@ -176,7 +203,7 @@
             更新数据项
             </summary>
             <param name="key"></param>
-            <param name="value">为null时删除该项</param>
+            <param name="bag">为null时删除该项</param>
         </member>
         <member name="M:Senparc.Weixin.Containers.BaseContainer`1.Update(System.String,System.Action{`0})">
             <summary>
@@ -607,6 +634,12 @@
             微信自定义异常基类
             </summary>
         </member>
+        <member name="M:Senparc.Weixin.Helpers.ContainerHelper.GetCacheKey(System.Type)">
+            <summary>
+            获取缓存Key
+            </summary>
+            <returns></returns>
+        </member>
         <member name="T:Senparc.Weixin.Helpers.ExpandoJsonConverter">
             <summary>
             Allows JSON serialization of Expando objects into expected results (e.g., "x: 1, y: 2") instead of the default dictionary serialization.
@@ -705,9 +738,19 @@
             消息列队
             </summary>
         </member>
+        <member name="F:Senparc.Weixin.MessageQueue.SenparcMessageQueue.MessageQueueDictionary">
+            <summary>
+            列队数据集合
+            </summary>
+        </member>
         <member name="F:Senparc.Weixin.MessageQueue.SenparcMessageQueue.MessageQueueSyncLock">
             <summary>
             同步执行锁
+            </summary>
+        </member>
+        <member name="F:Senparc.Weixin.MessageQueue.SenparcMessageQueue.FlushCacheLock">
+            <summary>
+            立即同步所有缓存执行锁（给OperateQueue()使用）
             </summary>
         </member>
         <member name="M:Senparc.Weixin.MessageQueue.SenparcMessageQueue.GenerateKey(System.String,System.Type,System.String,System.String)">
@@ -719,6 +762,11 @@
             <param name="identityKey">对象唯一标识Key</param>
             <param name="actionName">操作名称，如“UpdateContainerBag”</param>
             <returns></returns>
+        </member>
+        <member name="M:Senparc.Weixin.MessageQueue.SenparcMessageQueue.OperateQueue">
+            <summary>
+            操作列队
+            </summary>
         </member>
         <member name="M:Senparc.Weixin.MessageQueue.SenparcMessageQueue.GetCurrentKey">
             <summary>
@@ -735,14 +783,14 @@
         </member>
         <member name="M:Senparc.Weixin.MessageQueue.SenparcMessageQueue.Add(System.String,System.Action)">
             <summary>
-            添加
+            添加列队成员
             </summary>
             <param name="key"></param>
             <param name="action"></param>
         </member>
         <member name="M:Senparc.Weixin.MessageQueue.SenparcMessageQueue.Remove(System.String)">
             <summary>
-            移除对象
+            移除列队成员
             </summary>
             <param name="key"></param>
         </member>
@@ -754,12 +802,50 @@
         </member>
         <member name="T:Senparc.Weixin.MessageQueue.SenparcMessageQueueItem">
             <summary>
-            SenparcMessageQueueItem
+            SenparcMessageQueue消息列队项
             </summary>
+        </member>
+        <member name="P:Senparc.Weixin.MessageQueue.SenparcMessageQueueItem.Key">
+            <summary>
+            列队项唯一标识
+            </summary>
+        </member>
+        <member name="P:Senparc.Weixin.MessageQueue.SenparcMessageQueueItem.Action">
+            <summary>
+            列队项目命中触发时执行的委托
+            </summary>
+        </member>
+        <member name="P:Senparc.Weixin.MessageQueue.SenparcMessageQueueItem.AddTime">
+            <summary>
+            此实例对象的创建时间
+            </summary>
+        </member>
+        <member name="P:Senparc.Weixin.MessageQueue.SenparcMessageQueueItem.Description">
+            <summary>
+            项目说明（主要用于调试）
+            </summary>
+        </member>
+        <member name="M:Senparc.Weixin.MessageQueue.SenparcMessageQueueItem.#ctor(System.String,System.Action,System.String)">
+            <summary>
+            初始化SenparcMessageQueue消息列队项
+            </summary>
+            <param name="key"></param>
+            <param name="action"></param>
+            <param name="description"></param>
         </member>
         <member name="T:Senparc.Weixin.Threads.SenparcMessageQueueThreadUtility">
             <summary>
             SenparcMessageQueue线程自动处理
+            </summary>
+        </member>
+        <member name="M:Senparc.Weixin.Threads.SenparcMessageQueueThreadUtility.Finalize">
+            <summary>
+            析构函数，将未处理的列队处理掉
+            </summary>
+        </member>
+        <member name="M:Senparc.Weixin.Threads.SenparcMessageQueueThreadUtility.Run">
+            <summary>
+            启动线程轮询
             </summary>
         </member>
         <member name="T:Senparc.Weixin.Threads.ThreadUtility">
@@ -1377,6 +1463,39 @@
             <param name="jsonSetting">JSON字符串生成设置</param>
             <returns></returns>
         </member>
+        <member name="T:Senparc.Weixin.CacheUtility.CacheUtility">
+            <summary>
+            缓存工具类
+            </summary>
+        </member>
+        <member name="T:Senparc.Weixin.CacheUtility.FlushCache">
+            <summary>
+            缓存立即生效方法
+            </summary>
+        </member>
+        <member name="P:Senparc.Weixin.CacheUtility.FlushCache.DoFlush">
+            <summary>
+            是否立即个更新到缓存
+            </summary>
+        </member>
+        <member name="M:Senparc.Weixin.CacheUtility.FlushCache.#ctor(System.Boolean)">
+             <summary>
+            
+             </summary>
+             <param name="doFlush">是否立即更新到缓存</param>
+        </member>
+        <member name="M:Senparc.Weixin.CacheUtility.FlushCache.Dispose">
+            <summary>
+            释放，开始立即更新所有缓存
+            </summary>
+        </member>
+        <member name="M:Senparc.Weixin.CacheUtility.FlushCache.CreateInstance(System.Boolean)">
+            <summary>
+            创建一个FlushCache实例
+            </summary>
+            <param name="doFlush">是否立即更新到缓存</param>
+            <returns></returns>
+        </member>
         <member name="M:Senparc.Weixin.Utilities.WeixinUtility.ApiUtility.IsAppId(System.String)">
             <summary>
             判断accessTokenOrAppId参数是否是AppId
@@ -1700,6 +1819,7 @@
             <param name="url"></param>
             <returns></returns>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:Senparc.Weixin.HttpUtility.RequestUtility.AsUrlData(System.String)" -->
         <member name="P:Senparc.Weixin.MessageHandlers.IMessageHandler`2.WeixinOpenId">
             <summary>
             发送者用户名（OpenId）
