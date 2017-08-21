@@ -22,6 +22,7 @@ namespace Senparc.WeixinTests.Cache.Lock
                     (DateTime.Now - dt1).TotalMilliseconds);
                 Thread.Sleep(20);
             });
+
             var dt2 = DateTime.Now;
             Console.WriteLine("Working Threads Count:{0}", 100 * 20 / (dt2 - dt1).TotalMilliseconds);
             //测试结果：同时运行的线程数约为4（平均3.6）,实际目测为5
@@ -77,9 +78,8 @@ namespace Senparc.WeixinTests.Cache.Lock
             {
                 var redisConfiguration = "localhost:6379";
                 RedisManager.ConfigurationOption = redisConfiguration;
-                CacheStrategyFactory.RegisterContainerCacheStrategy(() => RedisContainerCacheStrategy.Instance);//Redis
+                CacheStrategyFactory.RegisterObjectCacheStrategy(() => RedisObjectCacheStrategy.Instance);//Redis
             }
-
 
             Random rnd = new Random();
             var threadsCount = 20M;
@@ -111,10 +111,9 @@ namespace Senparc.WeixinTests.Cache.Lock
                 {
                     var appId = (i1 % 2).ToString();
                     var resourceName = "Test-" + rnd.Next(0, 2);//调整这里的随机数，可以改变锁的个数
-                    var cache = CacheStrategyFactory.GetContainerCacheStragegyInstance();//每次重新获取实例（因为单例模式，所以其实是同一个）
+                    var cache = CacheStrategyFactory.GetObjectCacheStrategyInstance();//每次重新获取实例（因为单例模式，所以其实是同一个）
 
                     Console.WriteLine("线程 {0} / {1} : {2} 进入，准备尝试锁。Cache实例：{3}", Thread.CurrentThread.GetHashCode(), resourceName, appId,cache.GetHashCode());
-
 
                     DateTime dt1 = DateTime.Now;
                     using (var cacheLock = cache.BeginCacheLock(resourceName, appId, (int)retryTimes, new TimeSpan(0, 0, 0, 0, 20)))

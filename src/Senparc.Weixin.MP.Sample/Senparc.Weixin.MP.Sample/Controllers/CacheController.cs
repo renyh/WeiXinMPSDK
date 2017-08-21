@@ -40,6 +40,7 @@ namespace Senparc.Weixin.MP.Sample.Controllers
     internal class TestContainer1 : BaseContainer<TestContainerBag1>
     {
     }
+
     internal class TestContainer2 : BaseContainer<TestContainerBag2>
     {
     }
@@ -61,30 +62,30 @@ namespace Senparc.Weixin.MP.Sample.Controllers
 
             if (id == 1)
             {
-                CacheStrategyFactory.RegisterContainerCacheStrategy(() => RedisContainerCacheStrategy.Instance);
+                CacheStrategyFactory.RegisterObjectCacheStrategy(() => RedisObjectCacheStrategy.Instance);
             }
             else
             {
-                CacheStrategyFactory.RegisterContainerCacheStrategy(() => null);
+                CacheStrategyFactory.RegisterObjectCacheStrategy(() => null);
             }
 
             var sb = new StringBuilder();
             //var cacheKey = TestContainer1.GetContainerCacheKey();
-            var containerCacheStragegy = CacheStrategyFactory.GetContainerCacheStragegyInstance();
-            var itemCollection = containerCacheStragegy.GetAll<TestContainerBag1>();
+            var containerCacheStrategy = CacheStrategyFactory.GetObjectCacheStrategyInstance().ContainerCacheStrategy;
+            var itemCollection = containerCacheStrategy.GetAll<TestContainerBag1>();
 
             sb.AppendFormat("Count1：{0}<br />", itemCollection != null ? itemCollection.Count() : -1);
 
 
-            var bagKey = "Redis." + DateTime.Now.ToString();
+            var bagKey = "Redis." + DateTime.Now.ToString("yyyy-MM-dd:HH-mm-ss-ffff");
             var bag = new TestContainerBag1()
             {
                 Key = bagKey,
                 DateTime = DateTime.Now
             };
-            TestContainer1.Update(bagKey, bag);//更新到缓存（列队）
+            TestContainer1.Update(bagKey, bag);//更新到缓存（队列）
 
-            itemCollection = containerCacheStragegy.GetAll<TestContainerBag1>();
+            itemCollection = containerCacheStrategy.GetAll<TestContainerBag1>();
 
             sb.AppendFormat("Count2：{0}<br />", itemCollection != null ? itemCollection.Count() : -1);
 
@@ -102,21 +103,22 @@ namespace Senparc.Weixin.MP.Sample.Controllers
         public ActionResult RunTest()
         {
             var sb = new StringBuilder();
-            var containerCacheStragegy = CacheStrategyFactory.GetContainerCacheStragegyInstance();
-            sb.AppendFormat("{0}：{1}<br />", "当前缓存策略", containerCacheStragegy.GetType().Name);
+            //var containerCacheStrategy = CacheStrategyFactory.GetContainerCacheStrategyInstance();
+            var containerCacheStrategy = CacheStrategyFactory.GetObjectCacheStrategyInstance().ContainerCacheStrategy;
+            sb.AppendFormat("{0}：{1}<br />", "当前缓存策略", containerCacheStrategy.GetType().Name);
 
             var finalExisted = false;
             for (int i = 0; i < 3; i++)
             {
                 sb.AppendFormat("<br />====== {0}：{1} ======<br /><br />", "开始一轮测试", i + 1);
                 var shortBagKey = DateTime.Now.Ticks.ToString();
-                var finalBagKey = containerCacheStragegy.GetFinalKey(ContainerHelper.GetItemCacheKey(typeof(TestContainerBag1), shortBagKey));//获取最终缓存中的键
+                var finalBagKey = containerCacheStrategy.GetFinalKey(ContainerHelper.GetItemCacheKey(typeof(TestContainerBag1), shortBagKey));//获取最终缓存中的键
                 var bag = new TestContainerBag1()
                 {
                     Key = shortBagKey,
                     DateTime = DateTime.Now
                 };
-                TestContainer1.Update(shortBagKey, bag); //更新到缓存（列队）
+                TestContainer1.Update(shortBagKey, bag); //更新到缓存（队列）
                 sb.AppendFormat("{0}：{1}（Ticks：{2}）<br />", "bag.DateTime", bag.DateTime.ToLongTimeString(),
                     bag.DateTime.Ticks);
 
@@ -124,16 +126,16 @@ namespace Senparc.Weixin.MP.Sample.Controllers
 
                 bag.DateTime = DateTime.Now; //进行修改
 
-                //读取列队
+                //读取队列
                 var mq = new SenparcMessageQueue();
                 var mqKey = SenparcMessageQueue.GenerateKey("ContainerBag", bag.GetType(), bag.Key, "UpdateContainerBag");
                 var mqItem = mq.GetItem(mqKey);
                 sb.AppendFormat("{0}：{1}（Ticks：{2}）<br />", "bag.DateTime", bag.DateTime.ToLongTimeString(),
                     bag.DateTime.Ticks);
-                sb.AppendFormat("{0}：{1}<br />", "已经加入列队", mqItem != null);
-                sb.AppendFormat("{0}：{1}<br />", "当前消息列队数量（未更新缓存）", mq.GetCount());
+                sb.AppendFormat("{0}：{1}<br />", "已经加入队列", mqItem != null);
+                sb.AppendFormat("{0}：{1}<br />", "当前消息队列数量（未更新缓存）", mq.GetCount());
 
-                var itemCollection = containerCacheStragegy.GetAll<TestContainerBag1>();
+                var itemCollection = containerCacheStrategy.GetAll<TestContainerBag1>();
                 var existed = itemCollection.ContainsKey(finalBagKey);
                 sb.AppendFormat("{0}：{1}<br />", "当前缓存是否存在", existed);
                 sb.AppendFormat("{0}：{1}<br />", "插入缓存时间",
@@ -142,9 +144,9 @@ namespace Senparc.Weixin.MP.Sample.Controllers
                 var waitSeconds = i;
                 sb.AppendFormat("{0}：{1}<br />", "操作", "等待" + waitSeconds + "秒");
                 Thread.Sleep(waitSeconds * 1000); //线程默认轮询等待时间为2秒
-                sb.AppendFormat("{0}：{1}<br />", "当前消息列队数量（未更新缓存）", mq.GetCount());
+                sb.AppendFormat("{0}：{1}<br />", "当前消息队列数量（未更新缓存）", mq.GetCount());
 
-                itemCollection = containerCacheStragegy.GetAll<TestContainerBag1>();
+                itemCollection = containerCacheStrategy.GetAll<TestContainerBag1>();
                 existed = itemCollection.ContainsKey(finalBagKey);
                 finalExisted = existed;
                 sb.AppendFormat("{0}：{1}<br />", "当前缓存是否存在", existed);
