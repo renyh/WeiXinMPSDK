@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2017 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2020 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2017 Senparc
+    Copyright (C) 2020 Senparc
     
     文件名：WiFiApi.cs
     文件功能描述：微信连WiFi接口
@@ -50,6 +50,8 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
  */
 
 using System.Threading.Tasks;
+using Senparc.NeuChar;
+using Senparc.Weixin.CommonAPIs;
 using Senparc.Weixin.Entities;
 using Senparc.Weixin.Helpers;
 using Senparc.Weixin.MP.AdvancedAPIs.WiFi;
@@ -62,7 +64,7 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
     /// </summary>
     public static class WiFiApi
     {
-        #region 同步请求
+        #region 同步方法
         
       
         /// <summary>
@@ -73,11 +75,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="pageSize">每页的个数，默认10个，最大20个</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopList", true)]
         public static WiFiShopListJsonResult ShopList(string accessTokenOrAppId, int pageIndex = 1, int pageSize = 10, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/list?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/list?access_token={0}";
 
                 var data = new
                 {
@@ -97,11 +100,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="pagesize">每页的个数，默认10个，最大20个</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopGet", true)]
         public static WiFiShopGetJsonResult ShopGet(string accessTokenOrAppId, long shopId, int pageindex = 1, int pagesize = 10, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/get?access_token={0}";
 
                 var data = new
                 {
@@ -122,11 +126,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="ssid">无线网络设备的ssid。32个字符以内；ssid支持中文，但可能因设备兼容性问题导致显示乱码，或无法连接等问题，相关风险自行承担！当门店下是portal型设备时，ssid必填；当门店下是密码型设备时，ssid选填，且ssid和密码必须有一个以大写字母“WX”开头</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopUpdate", true)]
         public static WxJsonResult ShopUpdate(string accessTokenOrAppId, long shopId, string oldSsid, string ssid, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/update?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/update?access_token={0}";
 
                 var data = new
                 {
@@ -147,11 +152,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="ssid">无线网络设备的ssid。若不填写ssid，默认为清空门店下所有设备；填写ssid则为清空该ssid下的所有设备</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopClean", true)]
         public static WxJsonResult ShopClean(string accessTokenOrAppId, long shopId, string ssid, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/clean?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/clean?access_token={0}";
                 var data = new object();
                 if (string.IsNullOrEmpty(ssid))
                 {
@@ -185,12 +191,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         ///// <param name="bssid">无线网络设备无线mac地址，格式冒号分隔，字符长度17个，并且字母小写，例如：00:1f:7a:ad:5c:a8</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.AddDevice", true)]
         public static WxJsonResult AddDevice(string accessTokenOrAppId, long shopId, string ssid, string password,
             /*string bssid,*/ int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/device/add?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/device/add?access_token={0}";
 
                 var data = new
                 {
@@ -212,12 +219,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="reset">重置secretkey，false-不重置，true-重置，默认为false</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.WifeRegister", true)]
         public static WiFiRegisterJsonResult WifeRegister(string accessTokenOrAppId, long shopId, string ssid, string reset,
            int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/apportal/register?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/apportal/register?access_token={0}";
 
                 var data = new
                 {
@@ -240,12 +248,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">根据门店id查询</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetDeviceList", true)]
         public static GetDeviceListResult GetDeviceList(string accessTokenOrAppId, int pageIndex = 1, int pageSize = 10,
             long? shopId = null, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/device/list?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/device/list?access_token={0}";
 
                 object data = new object();
 
@@ -279,11 +288,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="bssid">需要删除的无线网络设备无线mac地址，格式冒号分隔，字符长度17个，并且字母小写，例如：00:1f:7a:ad:5c:a8</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.DeleteDevice", true)]
         public static WxJsonResult DeleteDevice(string accessTokenOrAppId, string bssid, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/device/delete?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/device/delete?access_token={0}";
 
                 var data = new
                 {
@@ -303,12 +313,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="imgId"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetQrcode", true)]
         public static GetQrcodeResult GetQrcode(string accessTokenOrAppId, long shopId, int imgId,
             int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/qrcode/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/qrcode/get?access_token={0}";
 
                 var data = new
                 {
@@ -330,12 +341,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="url">自定义链接（选择传入）</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetHomePage", true)]
         public static WxJsonResult SetHomePage(string accessTokenOrAppId, long shopId, string url = null,
             int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/homepage/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/homepage/set?access_token={0}";
 
                 var data = new object();
 
@@ -372,12 +384,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">查询的门店id</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetHomePage", true)]
         public static GetHomePageResult GetHomePage(string accessTokenOrAppId, long shopId,
             int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/homepage/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/homepage/get?access_token={0}";
 
                 var data = new
                 {
@@ -397,12 +410,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="barType">微信首页欢迎语的文本内容：0--欢迎光临+公众号名称；1--欢迎光临+门店名称；2--已连接+公众号名称+WiFi；3--已连接+门店名称+Wi-Fi。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetBar", true)]
         public static WxJsonResult SetBar(string accessTokenOrAppId, long shopId, int barType,
             int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/bar/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/bar/set?access_token={0}";
 
                 var data = new
                     {
@@ -423,12 +437,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="finishPageUrl">连网完成页URL。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetFinishpage", true)]
         public static WxJsonResult SetFinishpage(string accessTokenOrAppId, long shopId, string finishPageUrl,
             int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/finishpage/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/finishpage/set?access_token={0}";
 
                 var data = new
                 {
@@ -451,13 +466,14 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">按门店ID搜索，-1为总统计</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetStatistics", true)]
         public static GetStatisticsResult GetStatistics(string accessTokenOrAppId, string beginDate, string endDate,
             long shopId = -1,
             int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/statistics/list?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/statistics/list?access_token={0}";
 
                 var data = new
                 {
@@ -483,12 +499,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="cardQuantity">卡券库存</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetCouponPut", true)]
         public static WxJsonResult SetCouponPut(string accessTokenOrAppId, long shopId, string cardId, string cardDescribe, string starTime, string endTime, int cardQuantity,
             int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/couponput/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/couponput/set?access_token={0}";
 
                 var data = new
                 {
@@ -512,11 +529,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">门店ID，可设置为0，表示所有门店</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetCouponPut", true)]
         public static WiFiGetCouponPutJsonResult GetCouponPut(string accessTokenOrAppId, long shopId, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/couponput/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/couponput/get?access_token={0}";
 
                 var data = new
                 {
@@ -534,11 +552,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// </summary>
         /// <param name="accessTokenOrAppId">AccessToken或AppId（推荐使用AppId，需要先注册）</param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetConnectUrl", true)]
         public static WiFiConnectUrlResultJson GetConnectUrl(string accessTokenOrAppId)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/account/get_connecturl?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/account/get_connecturl?access_token={0}";
 
                 return CommonJsonSend.Send<WiFiConnectUrlResultJson>(accessToken, urlFormat, null,
                     CommonJsonSendType.GET);
@@ -551,11 +570,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="callBackUrl">回调URL，开通插件成功后的跳转页面。注：该参数域名必须与跳转进开通插件页面的页面域名保持一致，建议均采用第三方平台域名。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.OpenPluginToken", true)]
         public static WiFiOpenPluginTokenJsonResult OpenPluginToken(string accessTokenOrAppId, string callBackUrl, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/openplugin/token?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/openplugin/token?access_token={0}";
 
                 var data = new
                 {
@@ -569,7 +589,7 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         }
         #endregion
 
-        #region 异步请求
+        #region 异步方法
         /// <summary>
         /// 【异步方法】获取Wi-Fi门店列表
         /// </summary>
@@ -578,20 +598,21 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="pageSize">每页的个数，默认10个，最大20个</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopListAsync", true)]
         public static async Task<WiFiShopListJsonResult> ShopListAsync(string accessTokenOrAppId, int pageIndex = 1, int pageSize = 10, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/list?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/list?access_token={0}";
 
                 var data = new
                 {
                     pageindex = pageIndex,
                     pagesize = pageSize
                 };
-                return await Senparc .Weixin .CommonAPIs .CommonJsonSend.SendAsync<WiFiShopListJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc .Weixin .CommonAPIs .CommonJsonSend.SendAsync<WiFiShopListJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         /// 【异步方法】查询门店Wi-Fi信息
@@ -602,11 +623,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="pagesize">每页的个数，默认10个，最大20个</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopGetAsync", true)]
         public static async Task<WiFiShopGetJsonResult> ShopGetAsync(string accessTokenOrAppId, long shopId, int pageindex = 1, int pagesize = 10, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/get?access_token={0}";
 
                 var data = new
                 {
@@ -614,9 +636,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     pageindex = pageindex,
                     pagesize = pagesize
                 };
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiShopGetJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiShopGetJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         /// 【异步方法】修改门店网络信息
@@ -627,11 +649,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="ssid">无线网络设备的ssid。32个字符以内；ssid支持中文，但可能因设备兼容性问题导致显示乱码，或无法连接等问题，相关风险自行承担！当门店下是portal型设备时，ssid必填；当门店下是密码型设备时，ssid选填，且ssid和密码必须有一个以大写字母“WX”开头</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopUpdateAsync", true)]
         public static async Task<WxJsonResult> ShopUpdateAsync(string accessTokenOrAppId, long shopId, string oldSsid, string ssid, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/update?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/update?access_token={0}";
 
                 var data = new
                 {
@@ -640,9 +663,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     ssid = ssid
 
                 };
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         /// 【异步方法】清空门店网络及设备
@@ -652,11 +675,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="ssid">无线网络设备的ssid。若不填写ssid，默认为清空门店下所有设备；填写ssid则为清空该ssid下的所有设备</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.ShopCleanAsync", true)]
         public static async Task<WxJsonResult> ShopCleanAsync(string accessTokenOrAppId, long shopId, string ssid, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/shop/clean?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/shop/clean?access_token={0}";
                 var data = new object();
                 if (string.IsNullOrEmpty(ssid))
                 {
@@ -676,9 +700,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     };
                 }
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         ///  【异步方法】添加设备
@@ -690,12 +714,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         ///// <param name="bssid">无线网络设备无线mac地址，格式冒号分隔，字符长度17个，并且字母小写，例如：00:1f:7a:ad:5c:a8</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.AddDeviceAsync", true)]
         public static async Task<WxJsonResult> AddDeviceAsync(string accessTokenOrAppId, long shopId, string ssid, string password,
             /*string bssid,*/ int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/device/add?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/device/add?access_token={0}";
 
                 var data = new
                 {
@@ -704,9 +729,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     password = password,
                     //bssid = bssid,
                 };
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         ///  【异步方法】添加portal型设备
@@ -717,12 +742,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="reset">重置secretkey，false-不重置，true-重置，默认为false</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.WifeRegisterAsync", true)]
         public static async Task<WiFiRegisterJsonResult> WifeRegisterAsync(string accessTokenOrAppId, long shopId, string ssid, string reset,
            int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/apportal/register?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/apportal/register?access_token={0}";
 
                 var data = new
                 {
@@ -730,9 +756,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     ssid = ssid,
                     reset = reset,
                 };
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiRegisterJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiRegisterJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
 
@@ -745,12 +771,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">根据门店id查询</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetDeviceListAsync", true)]
         public static async Task<GetDeviceListResult> GetDeviceListAsync(string accessTokenOrAppId, int pageIndex = 1, int pageSize = 10,
             long? shopId = null, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/device/list?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/device/list?access_token={0}";
 
                 object data = new object();
 
@@ -772,9 +799,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     };
                 }
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetDeviceListResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetDeviceListResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -784,20 +811,21 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="bssid">需要删除的无线网络设备无线mac地址，格式冒号分隔，字符长度17个，并且字母小写，例如：00:1f:7a:ad:5c:a8</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.DeleteDeviceAsync", true)]
         public static async Task<WxJsonResult> DeleteDeviceAsync(string accessTokenOrAppId, string bssid, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/device/delete?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/device/delete?access_token={0}";
 
                 var data = new
                 {
                     bssid = bssid
                 };
 
-                return await Senparc .Weixin .CommonAPIs .CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc .Weixin .CommonAPIs .CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -808,12 +836,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="imgId"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetQrcodeAsync", true)]
         public static async Task<GetQrcodeResult> GetQrcodeAsync(string accessTokenOrAppId, long shopId, int imgId,
             int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/qrcode/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/qrcode/get?access_token={0}";
 
                 var data = new
                 {
@@ -821,9 +850,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     img_id = imgId
                 };
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetQrcodeResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetQrcodeResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -835,12 +864,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="url">自定义链接（选择传入）</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetHomePageAsync", true)]
         public static async Task<WxJsonResult> SetHomePageAsync(string accessTokenOrAppId, long shopId, string url = null,
             int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/homepage/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/homepage/set?access_token={0}";
 
                 var data = new object();
 
@@ -865,9 +895,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     };
                 }
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -877,21 +907,22 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">查询的门店id</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetHomePageaAsync", true)]
         public static async Task<GetHomePageResult> GetHomePageaAsync(string accessTokenOrAppId, long shopId,
             int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/homepage/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/homepage/get?access_token={0}";
 
                 var data = new
                 {
                     shop_id = shopId,
                 };
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetHomePageResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetHomePageResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         ///【异步方法】 设置微信首页欢迎语
@@ -902,12 +933,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="barType">微信首页欢迎语的文本内容：0--欢迎光临+公众号名称；1--欢迎光临+门店名称；2--已连接+公众号名称+WiFi；3--已连接+门店名称+Wi-Fi。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetBarAsync", true)]
         public static async Task<WxJsonResult> SetBarAsync(string accessTokenOrAppId, long shopId, int barType,
             int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/bar/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/bar/set?access_token={0}";
 
                 var data = new
                     {
@@ -916,9 +948,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     };
 
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         ///【异步方法】 设置连网完成页
@@ -929,12 +961,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="finishPageUrl">连网完成页URL。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetFinishpageAsync", true)]
         public static async Task<WxJsonResult> SetFinishpageAsync(string accessTokenOrAppId, long shopId, string finishPageUrl,
             int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/finishpage/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/finishpage/set?access_token={0}";
 
                 var data = new
                 {
@@ -943,9 +976,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                 };
 
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -957,13 +990,14 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">按门店ID搜索，-1为总统计</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetStatisticsAsync", true)]
         public static async Task<GetStatisticsResult> GetStatisticsAsync(string accessTokenOrAppId, string beginDate, string endDate,
             long shopId = -1,
             int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/statistics/list?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/statistics/list?access_token={0}";
 
                 var data = new
                 {
@@ -972,9 +1006,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     shop_id = shopId,
                 };
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetStatisticsResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetStatisticsResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         ///【异步方法】 设置门店卡券投放信息
@@ -989,12 +1023,13 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="cardQuantity">卡券库存</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.SetCouponPutAsync", true)]
         public static async Task<WxJsonResult> SetCouponPutAsync(string accessTokenOrAppId, long shopId, string cardId, string cardDescribe, string starTime, string endTime, int cardQuantity,
             int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/couponput/set?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/couponput/set?access_token={0}";
 
                 var data = new
                 {
@@ -1007,9 +1042,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                 };
 
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         /// 【异步方法】查询门店卡券投放信息
@@ -1018,11 +1053,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="shopId">门店ID，可设置为0，表示所有门店</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetCouponPutAsync", true)]
         public static async Task<WiFiGetCouponPutJsonResult> GetCouponPutAsync(string accessTokenOrAppId, long shopId, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/couponput/get?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/couponput/get?access_token={0}";
 
                 var data = new
                 {
@@ -1030,9 +1066,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                 };
 
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiGetCouponPutJsonResult>(accessToken, urlFormat, data, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiGetCouponPutJsonResult>(accessToken, urlFormat, data, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1040,15 +1076,16 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// </summary>
         /// <param name="accessTokenOrAppId">AccessToken或AppId（推荐使用AppId，需要先注册）</param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.GetConnectUrlAsync", true)]
         public static async Task<WiFiConnectUrlResultJson> GetConnectUrlAsync(string accessTokenOrAppId)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/account/get_connecturl?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/account/get_connecturl?access_token={0}";
 
                 return await  Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiConnectUrlResultJson>(accessToken, urlFormat, null,
-                    CommonJsonSendType.GET);
-            }, accessTokenOrAppId);
+                    CommonJsonSendType.GET).ConfigureAwait(false);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         /// 【异步方法】第三方平台获取开插件wifi_token
@@ -1057,11 +1094,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="callBackUrl">回调URL，开通插件成功后的跳转页面。注：该参数域名必须与跳转进开通插件页面的页面域名保持一致，建议均采用第三方平台域名。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "WiFiApi.OpenPluginTokenAsync", true)]
         public static async Task<WiFiOpenPluginTokenJsonResult> OpenPluginTokenAsync(string accessTokenOrAppId, string callBackUrl, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/bizwifi/openplugin/token?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/bizwifi/openplugin/token?access_token={0}";
 
                 var data = new
                 {
@@ -1069,9 +1107,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                 };
 
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiOpenPluginTokenJsonResult>(accessToken, urlFormat, data, CommonJsonSendType.GET, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WiFiOpenPluginTokenJsonResult>(accessToken, urlFormat, data, CommonJsonSendType.GET, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         #endregion
 

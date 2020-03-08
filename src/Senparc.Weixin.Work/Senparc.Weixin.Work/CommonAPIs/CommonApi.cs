@@ -1,5 +1,5 @@
 ﻿/*----------------------------------------------------------------
-    Copyright (C) 2017 Senparc
+    Copyright (C) 2020 Senparc
     
     文件名：CommonApi.cs
     文件功能描述：通用基础API
@@ -18,7 +18,12 @@
 
     修改标识：Senparc - 20160813
     修改描述：修改GetTicket()方法，使用AccessTokenContainer获取AccessToken
-
+    
+    修改标识：Senparc - 20190129
+    修改描述：统一 CommonJsonSend.Send<T>() 方法请求接口
+    
+    修改标识：Senparc - 20191206
+    修改描述：CommonApi.Token() 方法设置异常抛出机制
 ----------------------------------------------------------------*/
 
 /*
@@ -29,6 +34,10 @@
  */
 
 using System.Threading.Tasks;
+using Senparc.CO2NET.Extensions;
+using Senparc.NeuChar;
+using Senparc.Weixin.CommonAPIs;
+using Senparc.Weixin.Exceptions;
 using Senparc.Weixin.HttpUtility;
 using Senparc.Weixin.Work.Containers;
 using Senparc.Weixin.Work.Entities;
@@ -40,15 +49,16 @@ namespace Senparc.Weixin.Work.CommonAPIs
     /// </summary>
     public partial class CommonApi
     {
-        public const string API_URL = "https://qyapi.weixin.qq.com/cgi-bin";
+        //public static string _apiUrl = Config.ApiWorkHost + "/cgi-bin";
 
-        #region 同步请求
+        #region 同步方法
 
         /// <summary>
         /// 获取AccessToken
         /// </summary>
         /// <param name="corpId"></param>
         /// <param name="corpSecret"></param>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.GetToken", true)]
         public static AccessTokenResult GetToken(string corpId, string corpSecret)
         {
             #region 主动调用的频率限制
@@ -74,8 +84,15 @@ namespace Senparc.Weixin.Work.CommonAPIs
 */
             #endregion
 
-            var url = string.Format(API_URL + "/gettoken?corpid={0}&corpsecret={1}", corpId.AsUrlData(), corpSecret.AsUrlData());
-            var result = Get.GetJson<AccessTokenResult>(url);
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/gettoken?corpid={0}&corpsecret={1}", corpId.AsUrlData(), corpSecret.AsUrlData());
+            var result = CommonJsonSend.Send<AccessTokenResult>(null, url, null, CommonJsonSendType.GET);
+
+            if (Config.ThrownWhenJsonResultFaild && result.errcode != ReturnCode_Work.请求成功)
+            {
+                var unregisterAppIdEx = new UnRegisterAppIdException(null, $"尚无已经注册的AppId，请先使用AccessTokenContainer.Register完成注册（全局执行一次即可）！模块：{NeuChar.PlatformType.WeChat_Work}");
+                throw unregisterAppIdEx;//抛出异常
+            }
+
             return result;
         }
 
@@ -84,11 +101,12 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// </summary>
         /// <param name="accessToken"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.GetCallBackIp", true)]
         public static GetCallBackIpResult GetCallBackIp(string accessToken)
         {
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/getcallbackip?access_token={0}", accessToken.AsUrlData());
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/getcallbackip?access_token={0}", accessToken.AsUrlData());
 
-            return Get.GetJson<GetCallBackIpResult>(url);
+            return CommonJsonSend.Send<GetCallBackIpResult>(null, url, null, CommonJsonSendType.GET);
         }
 
         /// <summary>
@@ -97,19 +115,20 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// <param name="corpId"></param>
         /// <param name="corpSecret"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.GetTicket", true)]
         public static JsApiTicketResult GetTicket(string corpId, string corpSecret)
         {
-            var accessToken = AccessTokenContainer.TryGetToken(corpId, corpSecret);
-            //var accessToken = GetToken(corpId, corpSecret).access_token;
+            return ApiHandlerWapper.TryCommonApi(accessToken =>
+            {
+                var url = string.Format(Config.ApiWorkHost + "/cgi-bin/get_jsapi_ticket?access_token={0}",
+                                       accessToken.AsUrlData());
 
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/get_jsapi_ticket?access_token={0}",
-                                    accessToken.AsUrlData());
-
-            JsApiTicketResult result = Get.GetJson<JsApiTicketResult>(url);
-            return result;
+                JsApiTicketResult result = CommonJsonSend.Send<JsApiTicketResult>(null, url, null, CommonJsonSendType.GET);
+                return result;
+            }, AccessTokenContainer.BuildingKey(corpId, corpSecret));
         }
 
-       
+
 
         /// <summary>
         /// userid转换成openid接口
@@ -119,9 +138,10 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// <param name="agentId">需要发送红包的应用ID，若只是使用微信支付和企业转账，则无需该参数</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.ConvertToOpenId", true)]
         public static ConvertToOpenIdResult ConvertToOpenId(string accessToken, string userId, string agentId = null, int timeOut = Config.TIME_OUT)
         {
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/user/convert_to_openid?access_token={0}",
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/user/convert_to_openid?access_token={0}",
                 accessToken.AsUrlData());
 
             var data = new
@@ -129,7 +149,6 @@ namespace Senparc.Weixin.Work.CommonAPIs
                 userid = userId,
                 agentid = agentId
             };
-
             return CommonJsonSend.Send<ConvertToOpenIdResult>(null, url, data, CommonJsonSendType.POST, timeOut);
         }
 
@@ -140,9 +159,10 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// <param name="openId"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.ConvertToUserId", true)]
         public static ConvertToUserIdResult ConvertToUserId(string accessToken, string openId, int timeOut = Config.TIME_OUT)
         {
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/user/convert_to_userid?access_token={0}",
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/user/convert_to_userid?access_token={0}",
                 accessToken.AsUrlData());
 
             var data = new
@@ -154,12 +174,14 @@ namespace Senparc.Weixin.Work.CommonAPIs
         }
         #endregion
 
-        #region 异步请求
+
+        #region 异步方法
         /// 【异步方法】<summary>
         /// 获取AccessToken
         /// </summary>
         /// <param name="corpId"></param>
         /// <param name="corpSecret"></param>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.GetTokenAsync", true)]
         public static async Task<AccessTokenResult> GetTokenAsync(string corpId, string corpSecret)
         {
             #region 主动调用的频率限制
@@ -185,9 +207,17 @@ namespace Senparc.Weixin.Work.CommonAPIs
 */
             #endregion
 
-            var url = string.Format(API_URL + "/gettoken?corpid={0}&corpsecret={1}", corpId.AsUrlData(), corpSecret.AsUrlData());
-            var result = await Get.GetJsonAsync<AccessTokenResult>(url);
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/gettoken?corpid={0}&corpsecret={1}", corpId.AsUrlData(), corpSecret.AsUrlData());
+            var result = await CommonJsonSend.SendAsync<AccessTokenResult>(null, url, null, CommonJsonSendType.POST).ConfigureAwait(false);
+
+            if (Config.ThrownWhenJsonResultFaild && result.errcode != ReturnCode_Work.请求成功)
+            {
+                var unregisterAppIdEx = new UnRegisterAppIdException(null, $"尚无已经注册的AppId，请先使用AccessTokenContainer.Register完成注册（全局执行一次即可）！模块：{NeuChar.PlatformType.WeChat_Work}");
+                throw unregisterAppIdEx;//抛出异常
+            }
+
             return result;
+
         }
 
         /// <summary>
@@ -195,11 +225,11 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// </summary>
         /// <param name="accessToken"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.GetCallBackIpAsync", true)]
         public static async Task<GetCallBackIpResult> GetCallBackIpAsync(string accessToken)
         {
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/getcallbackip?access_token={0}", accessToken.AsUrlData());
-
-            return await Get.GetJsonAsync<GetCallBackIpResult>(url);
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/getcallbackip?access_token={0}", accessToken.AsUrlData());
+            return await CommonJsonSend.SendAsync<GetCallBackIpResult>(null, url, null, CommonJsonSendType.GET).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -208,19 +238,20 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// <param name="corpId"></param>
         /// <param name="corpSecret"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.GetTicketAsync", true)]
         public static async Task<JsApiTicketResult> GetTicketAsync(string corpId, string corpSecret)
         {
-            var accessToken = await AccessTokenContainer.TryGetTokenAsync(corpId, corpSecret);
-            //var accessToken = GetToken(corpId, corpSecret).access_token;
 
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/get_jsapi_ticket?access_token={0}",
+            return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
+            {
+                var url = string.Format(Config.ApiWorkHost + "/cgi-bin/get_jsapi_ticket?access_token={0}",
                                     accessToken.AsUrlData());
 
-            JsApiTicketResult result = await Get.GetJsonAsync<JsApiTicketResult>(url);
-            return result;
+                return await CommonJsonSend.SendAsync<JsApiTicketResult>(null, url, null, CommonJsonSendType.GET).ConfigureAwait(false);
+            }, AccessTokenContainer.BuildingKey(corpId, corpSecret)).ConfigureAwait(false);
         }
 
-      
+
         /// <summary>
         /// 【异步方法】userid转换成openid接口
         /// </summary>
@@ -229,9 +260,10 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// <param name="agentId">需要发送红包的应用ID，若只是使用微信支付和企业转账，则无需该参数</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.ConvertToOpenIdAsync", true)]
         public static async Task<ConvertToOpenIdResult> ConvertToOpenIdAsync(string accessToken, string userId, string agentId = null, int timeOut = Config.TIME_OUT)
         {
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/user/convert_to_openid?access_token={0}",
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/user/convert_to_openid?access_token={0}",
                 accessToken.AsUrlData());
 
             var data = new
@@ -240,7 +272,7 @@ namespace Senparc.Weixin.Work.CommonAPIs
                 agentid = agentId
             };
 
-            return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<ConvertToOpenIdResult>(null, url, data, CommonJsonSendType.POST, timeOut);
+            return await CommonJsonSend.SendAsync<ConvertToOpenIdResult>(null, url, data, CommonJsonSendType.POST, timeOut).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -250,9 +282,10 @@ namespace Senparc.Weixin.Work.CommonAPIs
         /// <param name="openId"></param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Work, "CommonApi.ConvertToUserIdAsync", true)]
         public static async Task<ConvertToUserIdResult> ConvertToUserIdAsync(string accessToken, string openId, int timeOut = Config.TIME_OUT)
         {
-            var url = string.Format("https://qyapi.weixin.qq.com/cgi-bin/user/convert_to_userid?access_token={0}",
+            var url = string.Format(Config.ApiWorkHost + "/cgi-bin/user/convert_to_userid?access_token={0}",
                 accessToken.AsUrlData());
 
             var data = new
@@ -260,7 +293,7 @@ namespace Senparc.Weixin.Work.CommonAPIs
                 openid = openId
             };
 
-            return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<ConvertToUserIdResult>(null, url, data, CommonJsonSendType.POST, timeOut);
+            return await CommonJsonSend.SendAsync<ConvertToUserIdResult>(null, url, data, CommonJsonSendType.POST, timeOut).ConfigureAwait(false);
         }
         #endregion
     }

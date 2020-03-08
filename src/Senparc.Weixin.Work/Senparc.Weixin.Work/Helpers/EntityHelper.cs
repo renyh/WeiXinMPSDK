@@ -1,5 +1,5 @@
 ﻿/*----------------------------------------------------------------
-    Copyright (C) 2017 Senparc
+    Copyright (C) 2020 Senparc
     
     文件名：EntityHelper.cs
     文件功能描述：实体与xml相互转换
@@ -9,19 +9,34 @@
     
     修改标识：Senparc - 20150313
     修改描述：整理接口
+    
+    修改标识：Senparc - 20172008
+    修改描述：v1.2.0-beta1 为支持.NET 3.5/4.0进行重构
+   
+    修改标识：Senparc - 20180623
+    修改描述：v2.0.3 支持 Senparc.Weixin v5.0.3，EntityHelper.FillEntityWithXml() 支持 int[] 和 long[]
+
+    修改标识：Senparc - 20181226
+    修改描述：v3.3.2 修改 DateTime 为 DateTimeOffset
+
 ----------------------------------------------------------------*/
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
-using Senparc.Weixin.Helpers;
 using Senparc.Weixin.Work.Entities;
 using Senparc.Weixin.Work.Entities.Request.KF;
-using Senparc.Weixin.Utilities;
+using Senparc.CO2NET.Utilities;
+using Senparc.CO2NET.Helpers;
+using Senparc.NeuChar.Entities;
+using Senparc.NeuChar;
 
 namespace Senparc.Weixin.Work.Helpers
 {
+    /// <summary>
+    /// EntityHelper
+    /// </summary>
     public static class EntityHelper
     {
         /// <summary>
@@ -46,35 +61,41 @@ namespace Senparc.Weixin.Work.Helpers
                         //case "String":
                         //    goto default;
                         case "DateTime":
+                        case "DateTimeOffset":
                         case "Int32":
+                        case "Int32[]": //增加int[]
                         case "Int64":
+                        case "Int64[]": //增加long[]
                         case "Double":
                         case "Nullable`1": //可为空对象
-                            EntityUtility.EntityUtility.FillSystemType(entity, prop, root.Element(propName).Value);
+                            EntityUtility.FillSystemType(entity, prop, root.Element(propName).Value);
                             break;
                         case "Boolean":
                             if (propName == "FuncFlag")
                             {
-                                EntityUtility.EntityUtility.FillSystemType(entity, prop, root.Element(propName).Value == "1");
+                                EntityUtility.FillSystemType(entity, prop, root.Element(propName).Value == "1");
                             }
                             else
                             {
                                 goto default;
                             }
                             break;
-
                         //以下为枚举类型
+                        case "ContactChangeType":
+                            //已设为只读
+                            //prop.SetValue(entity, MsgTypeHelper.GetRequestMsgType(root.Element(propName).Value), null);
+                            break;
                         case "RequestMsgType":
                             //已设为只读
                             //prop.SetValue(entity, MsgTypeHelper.GetRequestMsgType(root.Element(propName).Value), null);
                             break;
                         case "ResponseMsgType": //Response适用
-                            //已设为只读
-                            //prop.SetValue(entity, MsgTypeHelper.GetResponseMsgType(root.Element(propName).Value), null);
+                                                //已设为只读
+                                                //prop.SetValue(entity, MsgTypeHelper.GetResponseMsgType(root.Element(propName).Value), null);
                             break;
                         case "ThirdPartyInfo": //ThirdPartyInfo适用
-                            //已设为只读
-                            //prop.SetValue(entity, MsgTypeHelper.GetResponseMsgType(root.Element(propName).Value), null);
+                                               //已设为只读
+                                               //prop.SetValue(entity, MsgTypeHelper.GetResponseMsgType(root.Element(propName).Value), null);
                             break;
                         case "Event":
                             //已设为只读
@@ -160,7 +181,7 @@ namespace Senparc.Weixin.Work.Helpers
                                 AgentType tp;
                                 if (Enum.TryParse(root.Element(propName).Value, out tp))
                                 {
-                                    prop.SetValue(entity, tp);
+                                    prop.SetValue(entity, tp, null);
                                 }
                                 break;
                             }
@@ -168,7 +189,7 @@ namespace Senparc.Weixin.Work.Helpers
                             {
                                 Receiver receiver = new Receiver();
                                 FillEntityWithXml(receiver, new XDocument(root.Element(propName)));
-                                prop.SetValue(entity, receiver);
+                                prop.SetValue(entity, receiver, null);
                                 break;
                             }
                         default:
@@ -188,8 +209,11 @@ namespace Senparc.Weixin.Work.Helpers
                             var msgTypeEle = item.Element("MsgType");
                             if (msgTypeEle != null)
                             {
-                                RequestMsgType type;
-                                if (Enum.TryParse(msgTypeEle.Value, true, out type))
+                                RequestMsgType type = RequestMsgType.Unknown;
+                                var parseSuccess = false;
+                                parseSuccess = Enum.TryParse(msgTypeEle.Value, true, out type);
+                                if (parseSuccess)
+                                {
                                     switch (type)
                                     {
                                         case RequestMsgType.Event:
@@ -199,7 +223,7 @@ namespace Senparc.Weixin.Work.Helpers
                                             }
                                         case RequestMsgType.File:
                                             {
-                                                reqItem = new RequestMessageFile();
+                                                reqItem = new Entities.Request.KF.RequestMessageFile();
                                                 break;
                                             }
                                         case RequestMsgType.Image:
@@ -220,7 +244,7 @@ namespace Senparc.Weixin.Work.Helpers
                                         case RequestMsgType.Text:
                                             {
                                                 reqItem = new Entities.Request.KF.RequestMessageText();
-                                               
+
                                                 break;
                                             }
                                         case RequestMsgType.Voice:
@@ -229,6 +253,7 @@ namespace Senparc.Weixin.Work.Helpers
                                                 break;
                                             }
                                     }
+                                }
                             }
                             if (reqItem != null)
                             {
@@ -256,8 +281,8 @@ namespace Senparc.Weixin.Work.Helpers
             var root = doc.Root;
 
             /* 注意！
-             * 经过测试，微信对字段排序有严格要求，这里对排序进行强制约束
-            */
+			 * 经过测试，微信对字段排序有严格要求，这里对排序进行强制约束
+			*/
             var propNameOrder = new List<string>() { "ToUserName", "FromUserName", "CreateTime", "MsgType" };
             //不同返回类型需要对应不同特殊格式的排序
             if (entity is ResponseMessageNews)
@@ -340,7 +365,10 @@ namespace Senparc.Weixin.Work.Helpers
                                              new XCData(prop.GetValue(entity, null) as string ?? "")));
                             break;
                         case "DateTime":
-                            root.Add(new XElement(propName, DateTimeHelper.GetWeixinDateTime((DateTime)prop.GetValue(entity, null))));
+                            root.Add(new XElement(propName, DateTimeHelper.GetUnixDateTime((DateTime)prop.GetValue(entity, null))));
+                            break;
+                        case "DateTimeOffset":
+                            root.Add(new XElement(propName, DateTimeHelper.GetUnixDateTime((DateTimeOffset)prop.GetValue(entity, null))));
                             break;
                         case "Boolean":
                             if (propName == "FuncFlag")
@@ -371,25 +399,25 @@ namespace Senparc.Weixin.Work.Helpers
         }
 
         /// <summary>
-		/// 将实体转为XML字符串
-		/// </summary>
-		/// <typeparam name="T">RequestMessage或ResponseMessage</typeparam>
-		/// <param name="entity">实体</param>
-		/// <returns></returns>
-		public static string ConvertEntityToXmlString<T>(this T entity) where T : class, new()
+        /// 将实体转为XML字符串
+        /// </summary>
+        /// <typeparam name="T">RequestMessage或ResponseMessage</typeparam>
+        /// <param name="entity">实体</param>
+        /// <returns></returns>
+        public static string ConvertEntityToXmlString<T>(this T entity) where T : class, new()
         {
             return entity.ConvertEntityToXml().ToString();
         }
 
         /// <summary>
         /// ResponseMessageBase.CreateFromRequestMessage&lt;T&gt;(requestMessage)的扩展方法
-		/// </summary>
-		/// <typeparam name="T">需要生成的ResponseMessage类型</typeparam>
-		/// <param name="requestMessage">IRequestMessageBase接口下的接收信息类型</param>
-		/// <returns></returns>
-		public static T CreateResponseMessage<T>(this IRequestMessageBase requestMessage) where T : ResponseMessageBase
+        /// </summary>
+        /// <typeparam name="T">需要生成的ResponseMessage类型</typeparam>
+        /// <param name="requestMessage">IRequestMessageBase接口下的接收信息类型</param>
+        /// <returns></returns>
+        public static T CreateResponseMessage<T>(this IWorkRequestMessageBase requestMessage) where T : WorkResponseMessageBase
         {
-            return ResponseMessageBase.CreateFromRequestMessage<T>(requestMessage);
+            return WorkResponseMessageBase.CreateFromRequestMessage<T>(requestMessage);
         }
 
         /// <summary>
@@ -397,9 +425,9 @@ namespace Senparc.Weixin.Work.Helpers
         /// </summary>
         /// <param name="xml">返回给服务器的Response Xml</param>
         /// <returns></returns>
-        public static IResponseMessageBase CreateResponseMessage(this string xml)
+        public static IWorkResponseMessageBase CreateResponseMessage(this string xml)
         {
-            return ResponseMessageBase.CreateFromResponseXml(xml);
+            return WorkResponseMessageBase.CreateFromResponseXml(xml);
         }
     }
 }

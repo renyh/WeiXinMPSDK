@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2017 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2020 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,16 +19,21 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2017 Senparc
+    Copyright (C) 2020 Senparc
 
     文件名：ModifyDomainApi.cs
     文件功能描述：修改域名接口
 
 
     创建标识：Senparc - 20170601
-    
+
+    修改标识：Senparc - 20171201
+    修改描述：v1.7.3 修复ModifyDomainApi.ModifyDomain()方法判断问题
+        
 ----------------------------------------------------------------*/
 
+using Senparc.CO2NET.Extensions;
+using Senparc.NeuChar;
 using Senparc.Weixin.CommonAPIs;
 using Senparc.Weixin.HttpUtility;
 using Senparc.Weixin.Open.WxaAPIs.ModifyDomain;
@@ -42,7 +47,7 @@ namespace Senparc.Weixin.Open.WxaAPIs
 {
     public class ModifyDomainApi
     {
-        #region 同步接口
+        #region 同步方法
 
         /// <summary>
         /// 修改服务器地址 接口
@@ -55,6 +60,7 @@ namespace Senparc.Weixin.Open.WxaAPIs
         /// <param name="downloaddomain">downloadFile合法域名，当action参数是get时不需要此字段。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Open, "ModifyDomainApi.ModifyDomain", true)]
         public static ModifyDomainResultJson ModifyDomain(string accessToken, ModifyDomainAction action,
             List<string> requestdomain,
             List<string> wsrequestdomain,
@@ -62,11 +68,11 @@ namespace Senparc.Weixin.Open.WxaAPIs
             List<string> downloaddomain,
             int timeOut = Config.TIME_OUT)
         {
-            var url = string.Format("https://api.weixin.qq.com/wxa/modify_domain?access_token={0}", accessToken.AsUrlData());
+            var url = string.Format(Config.ApiMpHost + "/wxa/modify_domain?access_token={0}", accessToken.AsUrlData());
 
             object data;
 
-            if (action == ModifyDomainAction.set)
+            if (action == ModifyDomainAction.get)
             {
                 data = new
                 {
@@ -91,10 +97,11 @@ namespace Senparc.Weixin.Open.WxaAPIs
         #endregion
 
 
-        #region 异步接口
+
+        #region 异步方法
 
         /// <summary>
-        /// 【异步接口】修改服务器地址 接口
+        /// 【异步方法】修改服务器地址 接口
         /// </summary>
         /// <param name="accessToken"></param>
         /// <param name="action">操作类型</param>
@@ -104,6 +111,7 @@ namespace Senparc.Weixin.Open.WxaAPIs
         /// <param name="downloaddomain">downloadFile合法域名，当action参数是get时不需要此字段。</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_Open, "ModifyDomainApi.ModifyDomainAsync", true)]
         public static async Task<ModifyDomainResultJson> ModifyDomainAsync(string accessToken, ModifyDomainAction action,
             List<string> requestdomain,
             List<string> wsrequestdomain,
@@ -111,11 +119,11 @@ namespace Senparc.Weixin.Open.WxaAPIs
             List<string> downloaddomain,
             int timeOut = Config.TIME_OUT)
         {
-            var url = string.Format("https://api.weixin.qq.com/wxa/modify_domain?access_token={0}", accessToken.AsUrlData());
+            var url = string.Format(Config.ApiMpHost + "/wxa/modify_domain?access_token={0}", accessToken.AsUrlData());
 
             object data;
 
-            if (action == ModifyDomainAction.set)
+            if (action == ModifyDomainAction.get)
             {
                 data = new
                 {
@@ -134,7 +142,7 @@ namespace Senparc.Weixin.Open.WxaAPIs
                 };
             }
 
-            return await CommonJsonSend.SendAsync<ModifyDomainResultJson>(null, url, data, CommonJsonSendType.POST, timeOut);
+            return await CommonJsonSend.SendAsync<ModifyDomainResultJson>(null, url, data, CommonJsonSendType.POST, timeOut).ConfigureAwait(false);
         }
 
 

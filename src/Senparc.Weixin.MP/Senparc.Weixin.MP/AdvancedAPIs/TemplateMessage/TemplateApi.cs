@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2017 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2020 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2017 Senparc
+    Copyright (C) 2020 Senparc
     
     文件名：TemplateAPI.cs
     文件功能描述：模板消息接口
@@ -54,6 +54,8 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Senparc.NeuChar;
+using Senparc.Weixin.CommonAPIs;
 using Senparc.Weixin.Entities;
 using Senparc.Weixin.Entities.TemplateMessage;
 using Senparc.Weixin.HttpUtility;
@@ -78,6 +80,7 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="reserved">（非必填）用于保持请求和回调的状态，授权请后原样带回给第三方。该参数可用于防止csrf攻击（跨站请求伪造攻击），建议第三方带上该参数，可设置为简单的随机数加session进行校验，开发者可以填写a-zA-Z0-9的参数值，最多128字节</param>
         /// <param name="action">直接填get_confirm即可，保留默认值</param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.GetSubscribeMsgUrl", true)]
         public static string GetSubscribeMsgUrl(string appId, int scene, string templateId, string redirectUrl, string reserved = null, string action = "get_confirm")
         {
             //无论直接打开还是做页面302重定向时，必须带#wechat_redirect参数
@@ -85,24 +88,27 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                 action, appId, scene, templateId, redirectUrl, reserved);
         }
 
-        #region 同步请求
+        #region 同步方法
 
         /// <summary>
         /// 模板消息接口
         /// </summary>
         /// <param name="accessTokenOrAppId">AccessToken或AppId（推荐使用AppId，需要先注册）</param>
-        /// <param name="openId"></param>
-        /// <param name="templateId"></param>
-        /// <param name="url"></param>
-        /// <param name="data"></param>
-        /// <param name="miniProgram">跳小程序所需数据，不需跳小程序可不用传该数据</param>
+        /// <param name="openId">填接收消息的用户openid</param>
+        /// <param name="templateId">订阅消息模板ID</param>
+        /// <param name="url">（非必须）点击消息跳转的链接，需要有ICP备案</param>
+        /// <param name="data">消息正文，value为消息内容文本（200字以内），没有固定格式，可用\n换行，color为整段消息内容的字体颜色（目前仅支持整段消息为一种颜色）</param>
+        /// <param name="miniProgram">（非必须）跳小程序所需数据，不需跳小程序可不用传该数据</param>
         /// <param name="timeOut">代理请求超时时间（毫秒）</param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.SendTemplateMessage", true)]
         public static SendTemplateMessageResult SendTemplateMessage(string accessTokenOrAppId, string openId, string templateId, string url, object data, TempleteModel_MiniProgram miniProgram = null, int timeOut = Config.TIME_OUT)
         {
+            //文档：https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1500374289_66bvB
+
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/message/template/send?access_token={0}";
                 var msgData = new TempleteModel()
                 {
                     touser = openId,
@@ -110,7 +116,7 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     // topcolor = topcolor,
                     url = url,
                     miniprogram = miniProgram,
-                    data = data
+                    data = data,
                 };
                 return CommonJsonSend.Send<SendTemplateMessageResult>(accessToken, urlFormat, msgData, timeOut: timeOut);
 
@@ -126,6 +132,7 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="miniProgram">跳小程序所需数据，不需跳小程序可不用传该数据</param>
         /// <param name="timeOut">代理请求超时时间（毫秒）</param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.SendTemplateMessage", true)]
         public static SendTemplateMessageResult SendTemplateMessage(string accessTokenOrAppId, string openId, ITemplateMessageBase templateMessageData, TempleteModel_MiniProgram miniProgram = null, int timeOut = Config.TIME_OUT)
         {
             return SendTemplateMessage(accessTokenOrAppId, openId, templateMessageData.TemplateId,
@@ -140,11 +147,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="industry_id2">公众号模板消息所属行业编号</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.SetIndustry", true)]
         public static WxJsonResult SetIndustry(string accessTokenOrAppId, IndustryCode industry_id1, IndustryCode industry_id2, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/api_set_industry?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/api_set_industry?access_token={0}";
                 var msgData = new
                 {
                     industry_id1 = ((int)industry_id1).ToString(),
@@ -161,12 +169,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="accessTokenOrAppId">AccessToken或AppId（推荐使用AppId，需要先注册）</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.GetIndustry", true)]
         public static GetIndustryJsonResult GetIndustry(string accessTokenOrAppId, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/get_industry?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/get_industry?access_token={0}";
                 return CommonJsonSend.Send<GetIndustryJsonResult>(accessToken, urlFormat, null, CommonJsonSendType.GET, timeOut: timeOut);
 
             }, accessTokenOrAppId);
@@ -178,11 +186,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="template_id_short">模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.Addtemplate", true)]
         public static AddtemplateJsonResult Addtemplate(string accessTokenOrAppId, string template_id_short, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/api_add_template?access_token={0}";
                 var msgData = new
                 {
                     template_id_short = template_id_short
@@ -199,11 +208,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="timeOut"></param>
         /// <returns></returns>
 
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.GetPrivateTemplate", true)]
         public static GetPrivateTemplateJsonResult GetPrivateTemplate(string accessTokenOrAppId, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/get_all_private_template?access_token={0}";
                 return CommonJsonSend.Send<GetPrivateTemplateJsonResult>(accessToken, urlFormat, null, CommonJsonSendType.GET, timeOut: timeOut);
 
             }, accessTokenOrAppId);
@@ -215,11 +225,12 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="template_id">公众帐号下模板消息ID</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.DelPrivateTemplate", true)]
         public static WxJsonResult DelPrivateTemplate(string accessTokenOrAppId, string template_id, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/del_private_template?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/del_private_template?access_token={0}";
                 var msgData = new
                 {
                     template_id = template_id
@@ -242,13 +253,14 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="url">点击消息跳转的链接，需要有ICP备案</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static WxJsonResult Subscribe(string accessTokenOrAppId, string toUserOpenId, string templateId, int scene, string title, object data, string url = null, int timeOut = Config.TIME_OUT)
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.Subscribe", true)]
+        public static WxJsonResult Subscribe(string accessTokenOrAppId, string toUserOpenId, string templateId, string scene, string title, object data, string url = null, int timeOut = Config.TIME_OUT)
         {
             return ApiHandlerWapper.TryCommonApi(accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/message/template/subscribe?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/message/template/subscribe?access_token={0}";
 
-                var msgData = new
+                var msgData = new SubscribeMsgTempleteModel()
                 {
                     touser = toUserOpenId,
                     template_id = templateId,
@@ -265,23 +277,25 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
 
         #endregion
 
-        #region 异步请求
+        #region 异步方法
+
         /// <summary>
         /// 【异步方法】模板消息接口
         /// </summary>
         /// <param name="accessTokenOrAppId">AccessToken或AppId（推荐使用AppId，需要先注册）</param>
-        /// <param name="openId"></param>
-        /// <param name="templateId"></param>
-        /// <param name="url"></param>
-        /// <param name="data"></param>
-        /// <param name="miniProgram">跳小程序所需数据，不需跳小程序可不用传该数据</param>
+        /// <param name="openId">填接收消息的用户openid</param>
+        /// <param name="templateId">订阅消息模板ID</param>
+        /// <param name="url">（非必须）点击消息跳转的链接，需要有ICP备案</param>
+        /// <param name="data">消息正文，value为消息内容文本（200字以内），没有固定格式，可用\n换行，color为整段消息内容的字体颜色（目前仅支持整段消息为一种颜色）</param>
+        /// <param name="miniProgram">（非必须）跳小程序所需数据，不需跳小程序可不用传该数据</param>
         /// <param name="timeOut">代理请求超时时间（毫秒）</param>
-        /// <returns></returns>
+        /// <returns></returns>        /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.SendTemplateMessageAsync", true)]
         public static async Task<SendTemplateMessageResult> SendTemplateMessageAsync(string accessTokenOrAppId, string openId, string templateId, string url, object data, TempleteModel_MiniProgram miniProgram = null, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/message/template/send?access_token={0}";
                 var msgData = new TempleteModel()
                 {
                     touser = openId,
@@ -289,11 +303,11 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     // topcolor = topcolor,
                     url = url,
                     miniprogram = miniProgram,
-                    data = data
+                    data = data,
                 };
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<SendTemplateMessageResult>(accessToken, urlFormat, msgData, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<SendTemplateMessageResult>(accessToken, urlFormat, msgData, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
 
@@ -306,10 +320,11 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="templateMessageData"></param>
         /// <param name="timeOut">代理请求超时时间（毫秒）</param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.SendTemplateMessageAsync", true)]
         public static async Task<SendTemplateMessageResult> SendTemplateMessageAsync(string accessTokenOrAppId, string openId, ITemplateMessageBase templateMessageData, TempleteModel_MiniProgram miniProgram = null, int timeOut = Config.TIME_OUT)
         {
             return await SendTemplateMessageAsync(accessTokenOrAppId, openId, templateMessageData.TemplateId,
-                templateMessageData.Url, templateMessageData, miniProgram, timeOut);
+                templateMessageData.Url, templateMessageData, miniProgram, timeOut).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -321,19 +336,20 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="timeOut"></param>
         /// <returns></returns>
 
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.SetIndustryAsync", true)]
         public static async Task<WxJsonResult> SetIndustryAsync(string accessTokenOrAppId, IndustryCode industry_id1, IndustryCode industry_id2, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/api_set_industry?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/api_set_industry?access_token={0}";
                 var msgData = new
                 {
                     industry_id1 = ((int)industry_id1).ToString(),
                     industry_id2 = ((int)industry_id2).ToString()
                 };
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, msgData, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, msgData, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -343,14 +359,15 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="timeOut"></param>
         /// <returns></returns>
 
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.GetIndustryAsync", true)]
         public static async Task<GetIndustryJsonResult> GetIndustryAsync(string accessTokenOrAppId, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/get_industry?access_token={0}";
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetIndustryJsonResult>(accessToken, urlFormat, null, CommonJsonSendType.GET, timeOut: timeOut);
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/get_industry?access_token={0}";
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetIndustryJsonResult>(accessToken, urlFormat, null, CommonJsonSendType.GET, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         /// 【异步方法】获得模板ID
@@ -359,19 +376,20 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="template_id_short">模板库中模板的编号，有“TM**”和“OPENTMTM**”等形式</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.AddtemplateAsync", true)]
         public static async Task<AddtemplateJsonResult> AddtemplateAsync(string accessTokenOrAppId, string template_id_short, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/api_add_template?access_token={0}";
                 var msgData = new
                 {
                     template_id_short = template_id_short
 
                 };
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<AddtemplateJsonResult>(accessToken, urlFormat, msgData, CommonJsonSendType.POST, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<AddtemplateJsonResult>(accessToken, urlFormat, msgData, CommonJsonSendType.POST, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         ///【异步办法】 获取模板列表
@@ -380,14 +398,15 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="timeOut"></param>
         /// <returns></returns>
 
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.GetPrivateTemplateAsync", true)]
         public static async Task<GetPrivateTemplateJsonResult> GetPrivateTemplateAsync(string accessTokenOrAppId, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token={0}";
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetPrivateTemplateJsonResult>(accessToken, urlFormat, null, CommonJsonSendType.GET, timeOut: timeOut);
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/get_all_private_template?access_token={0}";
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<GetPrivateTemplateJsonResult>(accessToken, urlFormat, null, CommonJsonSendType.GET, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
         /// <summary>
         /// 【异步方法】删除模板
@@ -396,19 +415,20 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="template_id">公众帐号下模板消息ID</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.DelPrivateTemplateAsync", true)]
         public static async Task<WxJsonResult> DelPrivateTemplateAsync(string accessTokenOrAppId, string template_id, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/template/del_private_template?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/template/del_private_template?access_token={0}";
                 var msgData = new
                 {
                     template_id = template_id
                 };
 
-                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, msgData, CommonJsonSendType.POST, timeOut: timeOut);
+                return await Senparc.Weixin.CommonAPIs.CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, msgData, CommonJsonSendType.POST, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -423,13 +443,14 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
         /// <param name="url">点击消息跳转的链接，需要有ICP备案</param>
         /// <param name="timeOut"></param>
         /// <returns></returns>
-        public static async Task<WxJsonResult> SubscribeAsync(string accessTokenOrAppId, string toUserOpenId, string templateId, int scene, string title, object data, string url = null, int timeOut = Config.TIME_OUT)
+        [ApiBind(NeuChar.PlatformType.WeChat_OfficialAccount, "TemplateApi.SubscribeAsync", true)]
+        public static async Task<WxJsonResult> SubscribeAsync(string accessTokenOrAppId, string toUserOpenId, string templateId, string scene, string title, object data, string url = null, int timeOut = Config.TIME_OUT)
         {
             return await ApiHandlerWapper.TryCommonApiAsync(async accessToken =>
             {
-                const string urlFormat = "https://api.weixin.qq.com/cgi-bin/message/template/subscribe?access_token={0}";
+                string urlFormat = Config.ApiMpHost + "/cgi-bin/message/template/subscribe?access_token={0}";
 
-                var msgData = new
+                var msgData = new SubscribeMsgTempleteModel()
                 {
                     touser = toUserOpenId,
                     template_id = templateId,
@@ -439,9 +460,9 @@ namespace Senparc.Weixin.MP.AdvancedAPIs
                     data = data
                 };
 
-                return await CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, msgData, CommonJsonSendType.POST, timeOut: timeOut);
+                return await CommonJsonSend.SendAsync<WxJsonResult>(accessToken, urlFormat, msgData, CommonJsonSendType.POST, timeOut: timeOut).ConfigureAwait(false);
 
-            }, accessTokenOrAppId);
+            }, accessTokenOrAppId).ConfigureAwait(false);
         }
 
         #endregion
